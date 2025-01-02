@@ -68,14 +68,6 @@ def restore_device(device, db):
         send_print(device, i)
 
 
-def is_speaker(product):
-
-    if product == "KH 80" or product == "KH 150" or product == "KH 120 II":
-        return True
-
-    return False
-
-
 def _path_to_json(path):
     result = "null"
     for s in path[::-1]:
