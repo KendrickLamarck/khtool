@@ -153,6 +153,37 @@ def dict_to_strings(dict_):
     return result
 
 
+def populate_dict(device, dict_):
+    """Populate a command dictionary with values. """
+    dict_ = {"root": dict_}
+    path = ["root"]
+    visited = []
+    while path:
+        subtree = dict_
+        for s in path:
+            subtree = subtree[s]
+        for k in subtree.keys():
+            pathstring = "".join(path) + k
+            if pathstring in visited:
+                continue
+            visited.append(pathstring)
+            if subtree[k] != None:
+                path.append(k)
+                break
+            command = _path_to_json(path[1:] + [k])
+            command_output = send_command(device, command)
+            result = json.loads(command_output)
+            # This would be nicer but doesn't work because of osc/limits.
+            # for s in path[1:] + [k]:
+            #     result = result[s]
+            while isinstance(result, dict):
+                result = result.popitem()[-1]
+            subtree[k] = result
+        # This triggers if neither continue nor break were encountered.
+        else:
+            path.pop()
+
+
 def query_commands(device):
     """List of all command strings that should be used to query/backup a device."""
     result = dict_to_strings(get_all_available_commands(device))
@@ -169,11 +200,10 @@ def backup_device(device, db):
 
     product = get_product(device)
 
-    commands = []
-    for c in query_commands(device):
-        send_add_array(device, c, commands)
+    commands = get_all_available_commands(device)
+    populate_dict(device, commands)
 
-    db[device.ip] = {"commands": []}
+    db[device.ip] = {"commands": {}}
     db[device.ip]["commands"] = commands
     db[device.ip]["serial"] = get_serial(device)
     db[device.ip]["product"] = product
