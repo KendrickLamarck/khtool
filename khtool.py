@@ -80,62 +80,63 @@ def query_commands(device):
     commands = []
     product = get_product(device)
 
+    kh750fwnew = -1
     if product == "KH 750":
+        kh750fwnew = 1
         version = get_version(device)
         pattern = "^1_0|^1_1"
-        result = re.match(pattern, version)
-        if result:
+        if re.match(pattern, version):
             kh750fwnew = 0
-        else:
-            kh750fwnew = 1
-    else:
-        kh750fwnew = -1
 
-    if product == "KH 150" or product == "KH 120 II":
+    kh_150_120_ii_fwnew = -1
+    if product in ["KH 150", "KH 120 II"]:
+        kh_150_120_ii_fwnew = 1
         version = get_version(device)
         pattern = "^1_0"
-        result = re.match(pattern, version)
-        if not result:
-            commands += [
-                '{"device":{"name":null}}',
-                '{"device":{"identity":{"vendor":null}}}',
-                '{"device":{"identity":{"product":null}}}',
-                '{"device":{"identity":{"serial":null}}}',
-                '{"device":{"identity":{"version":null}}}',
-                '{"device":{"standby":{"enabled":null}}}',
-                '{"device":{"standby":{"auto_standby_time":null}}}',
-                '{"device":{"standby":{"level":null}}}',
-                '{"device":{"standby":{"countdown":null}}}',
-                '{"ui":{"logo":{"brightness":null}}}',
-                '{"audio":{"in":{"interface":null}}}',
-                '{"audio":{"in1":{"label":null}}}',
-                '{"audio":{"in2":{"label":null}}}',
-                '{"audio":{"out":{"level":null}}}',
-                '{"audio":{"out":{"mute":null}}}',
-                '{"audio":{"out":{"delay":null}}}',
-                '{"audio":{"out":{"solo":null}}}',
-                '{"audio":{"out":{"phaseinversion":null}}}',
-                '{"audio":{"out":{"mixer":{"levels":null}}}}',
-                '{"audio":{"out":{"mixer":{"inputs":null}}}}',
-                '{"audio":{"out":{"eq2":{"enabled":null}}}}',
-                '{"audio":{"out":{"eq2":{"type":null}}}}',
-                '{"audio":{"out":{"eq2":{"frequency":null}}}}',
-                '{"audio":{"out":{"eq2":{"q":null}}}}',
-                '{"audio":{"out":{"eq2":{"gain":null}}}}',
-                '{"audio":{"out":{"eq2":{"boost":null}}}}',
-                '{"audio":{"out":{"eq2":{"desc":null}}}}',
-                '{"audio":{"out":{"eq3":{"enabled":null}}}}',
-                '{"audio":{"out":{"eq3":{"type":null}}}}',
-                '{"audio":{"out":{"eq3":{"frequency":null}}}}',
-                '{"audio":{"out":{"eq3":{"q":null}}}}',
-                '{"audio":{"out":{"eq3":{"gain":null}}}}',
-                '{"audio":{"out":{"eq3":{"boost":null}}}}',
-                '{"audio":{"out":{"eq3":{"desc":null}}}}',
-            ]
+        if re.match(pattern, version):
+            kh_150_120_ii_fwnew = 0
 
-            return commands
+    if kh_150_120_ii_fwnew == 1:
+        commands += [
+            '{"device":{"name":null}}',
+            '{"device":{"identity":{"vendor":null}}}',
+            '{"device":{"identity":{"product":null}}}',
+            '{"device":{"identity":{"serial":null}}}',
+            '{"device":{"identity":{"version":null}}}',
+            '{"device":{"standby":{"enabled":null}}}',
+            '{"device":{"standby":{"auto_standby_time":null}}}',
+            '{"device":{"standby":{"level":null}}}',
+            '{"device":{"standby":{"countdown":null}}}',
+            '{"ui":{"logo":{"brightness":null}}}',
+            '{"audio":{"in":{"interface":null}}}',
+            '{"audio":{"in1":{"label":null}}}',
+            '{"audio":{"in2":{"label":null}}}',
+            '{"audio":{"out":{"level":null}}}',
+            '{"audio":{"out":{"mute":null}}}',
+            '{"audio":{"out":{"delay":null}}}',
+            '{"audio":{"out":{"solo":null}}}',
+            '{"audio":{"out":{"phaseinversion":null}}}',
+            '{"audio":{"out":{"mixer":{"levels":null}}}}',
+            '{"audio":{"out":{"mixer":{"inputs":null}}}}',
+            '{"audio":{"out":{"eq2":{"enabled":null}}}}',
+            '{"audio":{"out":{"eq2":{"type":null}}}}',
+            '{"audio":{"out":{"eq2":{"frequency":null}}}}',
+            '{"audio":{"out":{"eq2":{"q":null}}}}',
+            '{"audio":{"out":{"eq2":{"gain":null}}}}',
+            '{"audio":{"out":{"eq2":{"boost":null}}}}',
+            '{"audio":{"out":{"eq2":{"desc":null}}}}',
+            '{"audio":{"out":{"eq3":{"enabled":null}}}}',
+            '{"audio":{"out":{"eq3":{"type":null}}}}',
+            '{"audio":{"out":{"eq3":{"frequency":null}}}}',
+            '{"audio":{"out":{"eq3":{"q":null}}}}',
+            '{"audio":{"out":{"eq3":{"gain":null}}}}',
+            '{"audio":{"out":{"eq3":{"boost":null}}}}',
+            '{"audio":{"out":{"eq3":{"desc":null}}}}',
+        ]
 
-    if product == "KH 750" and kh750fwnew == 1:
+        return commands
+
+    if kh750fwnew == 1:
         commands += [
             '{"device":{"name":null}}',
             '{"device":{"identity":{"vendor":null}}}',
