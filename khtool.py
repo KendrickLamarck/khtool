@@ -76,6 +76,107 @@ def is_speaker(product):
     return False
 
 
+# Idea: Instead of None, use some code to represent which products support the command.
+# This shit is probably too complicated isn't it. Just make a dictionary for each product.
+ALL_COMMANDS = {
+    """Dictionary containing all supported commands in a tree structure. Commands that
+    can exist multiple times are only included once with a name such as inX or eqX. If
+    there are multiple versions, we use eqX, eqY, eqZ etc.
+
+    This dictionary can be used to pick and choose commands to query."""
+    "device": {
+        "name": None,
+        "identity": {
+            "vendor": None,
+            "product": None,
+            "serial": None,
+            "version": None,
+        },
+        "standby": {
+            "enabled": None,
+            "auto_standby_time": None,
+            "level": None,
+            "countdown": None,
+        }
+    },
+    "audio": {
+        "in": {
+            "interface": None,
+            "delay": None,
+        },
+        "inX": {
+            "label": None,
+        },
+        "out": {
+            "desc": None,
+            "level": None,
+            "mute": None,
+            "delay": None,
+            "solo": None,
+            "phaseinversion": None,
+            "mixer": {
+                "levels": None,
+                "inputs": None,
+            },
+            "eqX": {
+                "desc": None,
+                "enabled": None,
+                "type": None,
+                "frequency": None,
+                "q": None,
+                "gain": None,
+                "boost": None,
+            },
+            "outX": {
+                "loudspeaker": None,
+                "label": None,
+                "desc": None,
+                "delay": None,
+                "level": None,
+                "mute": None,
+                "mixer": {
+                    "levels": None,
+                    "inputs": None,
+                },
+                "eq1": {
+                    "desc": None,
+                    "inX": {
+                        "enabled": None,
+                        "q": None,
+                        "frequency": None,
+                        "gain": None,
+                        "type": None,
+                        "input": None,
+                    },
+                },
+                "eqX": {
+                    "desc": None,
+                    "enabled": None,
+                    "type": None,
+                    "frequency": None,
+                    "q": None,
+                    "gain": None,
+                    "boost": None,
+                },
+            },
+            "outY": {
+                "desc": None,
+                "delay": None,
+                "level": None,
+                "mute": None,
+                "mixer": {
+                    "levels": None,
+                    "inputs": None,
+                },
+                "eq1": {
+                    "desc": None
+                }
+            }
+        }
+    }
+}
+
+
 def query_commands(device):
     commands = []
     product = get_product(device)
