@@ -69,6 +69,13 @@ def restore_device(device, db):
 
 
 def _path_to_json(path):
+    """Converts path lists to json to be used for requests.
+
+    For example:
+
+    ["a", "b"] => {"a":{"b":null}}
+
+    """
     result = "null"
     for s in path[::-1]:
         result = '{"' + s + '":' + result + "}"
@@ -76,18 +83,29 @@ def _path_to_json(path):
 
 
 def _get_available_subcommands(device, path):
+    """Use an osc/schema request to obtain all possible DIRECT subcommands below path.
+
+    The result is a dictionary. Its keys are the subcommands and its values are either
+    an empty dict or None, indicating a sublist of commands or a queriable value,
+    respectively.
+    """
     json_path = _path_to_json(path)
     if path:
         json_path = "[" + json_path + "]"
     request = '{"osc":{"schema":' + json_path + '}}'
     response = send_command(device, request)
     result = json.loads(response)["osc"]["schema"][0]
+    # Strip the "prefix" of the returned dictionary.
     for s in path:
         result = result[s]
     return result
 
 
 def _get_command_subtree(device, path):
+    """Recursive helper function to get the whole subtree of commands below a path.
+
+    This function can be applied to the root path [] to get all available commands.
+    """
     result = _get_available_subcommands(device, path)
     if result == None:
         return None
@@ -101,6 +119,16 @@ def get_all_available_commands(device):
 
 
 def dict_to_strings(dict_):
+    """Convert a dictionary to a list of command strings.
+
+    For example:
+
+    {"a": {"b": None, "c": None}} => [
+        '{"a":{"b":null}}',
+        '{"a":{"c":null}}'
+    ]
+
+    """
     result = []
     dict_ = {"root": dict_}
     path = ["root"]
@@ -118,6 +146,7 @@ def dict_to_strings(dict_):
                 path.append(k)
                 break
             result.append(_path_to_json(path[1:] + [k]))
+        # This triggers if neither continue nor break were encountered.
         else:
             path.pop()
 
@@ -125,6 +154,7 @@ def dict_to_strings(dict_):
 
 
 def query_commands(device):
+    """List of all command strings that should be used to query/backup a device."""
     result = dict_to_strings(get_all_available_commands(device))
     result.sort()
     return result
