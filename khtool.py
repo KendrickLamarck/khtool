@@ -76,219 +76,77 @@ def is_speaker(product):
     return False
 
 
+def _path_to_json(path):
+    result = "null"
+    for s in path[::-1]:
+        result = '{"' + s + '":' + result + "}"
+    return result
+
+
+def _get_available_subcommands(device, path):
+    json_path = _path_to_json(path)
+    if path:
+        json_path = "[" + json_path + "]"
+    request = '{"osc":{"schema":' + json_path + '}}'
+    response = send_command(device, request)
+    result = json.loads(response)["osc"]["schema"][0]
+    for s in path:
+        result = result[s]
+    return result
+
+
+def _get_command_subtree(device, path):
+    result = _get_available_subcommands(device, path)
+    if result == None:
+        return None
+    for k in result.keys():
+        result[k] = _get_command_subtree(device, path + [k])
+    return result
+
+
+def get_all_available_commands(device):
+    return _get_command_subtree(device, [])
+
+
+def dict_to_strings(dict_):
+    result = []
+    dict_ = {"root": dict_}
+    path = ["root"]
+    visited = []
+    while path:
+        subtree = dict_
+        for s in path:
+            subtree = subtree[s]
+        for k in subtree.keys():
+            pathstring = "".join(path) + k
+            if pathstring in visited:
+                continue
+            visited.append(pathstring)
+            if subtree[k] != None:
+                path.append(k)
+                break
+            result.append(_path_to_json(path[1:] + [k]))
+        else:
+            path.pop()
+
+    return result
+
+
+def test_helper(path=[]):
+    X = ssc.Ssc_device_setup()
+    X.from_json("khtool.json")
+    device = X.ssc_devices[0]
+    device.connect(interface=get_interface(device))
+    assert device.connected
+    result = get_all_available_commands(device)
+    for s in dict_to_strings(result):
+        print(s)
+
+
 def query_commands(device):
-    commands = []
-    product = get_product(device)
-
-    kh750fwnew = -1
-    if product == "KH 750":
-        kh750fwnew = 1
-        version = get_version(device)
-        pattern = "^1_0|^1_1"
-        if re.match(pattern, version):
-            kh750fwnew = 0
-
-    kh_150_120_ii_fwnew = -1
-    if product in ["KH 150", "KH 120 II"]:
-        kh_150_120_ii_fwnew = 1
-        version = get_version(device)
-        pattern = "^1_0"
-        if re.match(pattern, version):
-            kh_150_120_ii_fwnew = 0
-
-    if kh_150_120_ii_fwnew == 1:
-        commands += [
-            '{"device":{"name":null}}',
-            '{"device":{"identity":{"vendor":null}}}',
-            '{"device":{"identity":{"product":null}}}',
-            '{"device":{"identity":{"serial":null}}}',
-            '{"device":{"identity":{"version":null}}}',
-            '{"device":{"standby":{"enabled":null}}}',
-            '{"device":{"standby":{"auto_standby_time":null}}}',
-            '{"device":{"standby":{"level":null}}}',
-            '{"device":{"standby":{"countdown":null}}}',
-            '{"ui":{"logo":{"brightness":null}}}',
-            '{"audio":{"in":{"interface":null}}}',
-            '{"audio":{"in1":{"label":null}}}',
-            '{"audio":{"in2":{"label":null}}}',
-            '{"audio":{"out":{"level":null}}}',
-            '{"audio":{"out":{"mute":null}}}',
-            '{"audio":{"out":{"delay":null}}}',
-            '{"audio":{"out":{"solo":null}}}',
-            '{"audio":{"out":{"phaseinversion":null}}}',
-            '{"audio":{"out":{"mixer":{"levels":null}}}}',
-            '{"audio":{"out":{"mixer":{"inputs":null}}}}',
-            '{"audio":{"out":{"eq2":{"enabled":null}}}}',
-            '{"audio":{"out":{"eq2":{"type":null}}}}',
-            '{"audio":{"out":{"eq2":{"frequency":null}}}}',
-            '{"audio":{"out":{"eq2":{"q":null}}}}',
-            '{"audio":{"out":{"eq2":{"gain":null}}}}',
-            '{"audio":{"out":{"eq2":{"boost":null}}}}',
-            '{"audio":{"out":{"eq2":{"desc":null}}}}',
-            '{"audio":{"out":{"eq3":{"enabled":null}}}}',
-            '{"audio":{"out":{"eq3":{"type":null}}}}',
-            '{"audio":{"out":{"eq3":{"frequency":null}}}}',
-            '{"audio":{"out":{"eq3":{"q":null}}}}',
-            '{"audio":{"out":{"eq3":{"gain":null}}}}',
-            '{"audio":{"out":{"eq3":{"boost":null}}}}',
-            '{"audio":{"out":{"eq3":{"desc":null}}}}',
-        ]
-
-        return commands
-
-    if kh750fwnew == 1:
-        commands += [
-            '{"device":{"name":null}}',
-            '{"device":{"identity":{"vendor":null}}}',
-            '{"device":{"identity":{"product":null}}}',
-            '{"device":{"identity":{"serial":null}}}',
-            '{"device":{"identity":{"version":null}}}',
-            '{"device":{"standby":{"enabled":null}}}',
-            '{"device":{"standby":{"auto_standby_time":null}}}',
-            '{"device":{"standby":{"level":null}}}',
-            '{"device":{"standby":{"countdown":null}}}',
-            '{"audio":{"in":{"delay":null}}}',
-            '{"audio":{"in":{"interface":null}}}',
-            '{"audio":{"in1":{"label":null}}}',
-            '{"audio":{"in2":{"label":null}}}',
-        ]
-
-        for x in range(1, 6):
-            if x != 5:
-                commands += [
-                    '{"audio":{"out' + str(x) + '":{"loudspeaker":null}}}',
-                    '{"audio":{"out' + str(x) + '":{"label":null}}}',
-                ]
-
-            commands += [
-                '{"audio":{"out' + str(x) + '":{"desc":null}}}',
-                '{"audio":{"out' + str(x) + '":{"delay":null}}}',
-                '{"audio":{"out' + str(x) + '":{"level":null}}}',
-                '{"audio":{"out' + str(x) + '":{"mute":null}}}',
-                '{"audio":{"out' + str(x) + '":{"mixer":{"levels":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"mixer":{"inputs":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq1":{"desc":null}}}}',
-            ]
-
-            for z in range(1, 3):
-                commands += [
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"enabled":null}}}}}',
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"q":null}}}}}',
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"frequency":null}}}}}',
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"gain":null}}}}}',
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"type":null}}}}}',
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"input":null}}}}}',
-                ]
-
-            commands += [
-                '{"audio":{"out' + str(x) + '":{"eq2":{"enabled":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"type":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"frequency":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"q":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"gain":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"boost":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"desc":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"enabled":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"type":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"frequency":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"q":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"gain":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"boost":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"desc":null}}}}',
-            ]
-
-        return commands
-
-    commands += [
-        '{"device":{"name":null}}',
-        '{"device":{"identity":{"vendor":null}}}',
-        '{"device":{"identity":{"product":null}}}',
-        '{"device":{"identity":{"serial":null}}}',
-        '{"device":{"identity":{"version":null}}}',
-        '{"device":{"standby":{"enabled":null}}}',
-        '{"device":{"standby":{"auto_standby_time":null}}}',
-        '{"device":{"standby":{"level":null}}}',
-    ]
-
-    if is_speaker(product):
-        commands += [
-            '{"ui":{"logo":{"brightness":null}}}',
-            '{"audio":{"in":{"gain":null}}}',
-            '{"audio":{"in":{"phase_invert":null}}}',
-        ]
-
-    commands += [
-        '{"audio":{"out":{"level":null}}}',
-        '{"audio":{"out":{"dimm":null}}}',
-        '{"audio":{"out":{"mute":null}}}',
-    ]
-
-    if is_speaker(product):
-        commands += [
-            '{"audio":{"out":{"delay":null}}}',
-            '{"audio":{"out":{"solo":null}}}',
-            '{"audio":{"out":{"phase_correction":null}}}',
-            '{"audio":{"out":{"limiter_mode":null}}}',
-            '{"audio":{"out":{"equalizer":{"enabled":null}}}}',
-            '{"audio":{"out":{"equalizer":{"type":null}}}}',
-            '{"audio":{"out":{"equalizer":{"frequency":null}}}}',
-            '{"audio":{"out":{"equalizer":{"q":null}}}}',
-            '{"audio":{"out":{"equalizer":{"gain":null}}}}',
-            '{"audio":{"out":{"equalizer":{"boost":null}}}}',
-        ]
-
-    if product == "KH 750":
-        commands += [
-            '{"audio":{"in":{"analog":null}}}',
-            '{"audio":{"in":{"delay":null}}}',
-            '{"audio":{"in":{"interface":null}}}',
-            '{"audio":{"in1":{"label":null}}}',
-            '{"audio":{"in2":{"label":null}}}',
-        ]
-
-        for x in range(1, 6):
-            if x != 5:
-                commands += [
-                    '{"audio":{"out' + str(x) + '":{"loudspeaker":null}}}',
-                    '{"audio":{"out' + str(x) + '":{"on":null}}}',
-                    '{"audio":{"out' + str(x) + '":{"label":null}}}',
-                ]
-            commands += [
-                '{"audio":{"out' + str(x) + '":{"gain":null}}}',
-                '{"audio":{"out' + str(x) + '":{"desc":null}}}',
-                '{"audio":{"out' + str(x) + '":{"delay":null}}}',
-                '{"audio":{"out' + str(x) + '":{"control":null}}}',
-                '{"audio":{"out' + str(x) + '":{"mixer":{"levels":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq1":{"desc":null}}}}',
-            ]
-
-            for z in range(1, 3):
-                commands += [
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"enabled":null}}}}}',
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"q":null}}}}}',
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"frequency":null}}}}}',
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"gain":null}}}}}',
-                    '{"audio":{"out' + str(x) + '":{"eq1":{"in' + str(z) + '":{"type":null}}}}}',
-                ]
-
-            commands += [
-                '{"audio":{"out' + str(x) + '":{"eq2":{"enabled":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"type":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"frequency":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"q":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"gain":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"boost":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq2":{"desc":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"enabled":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"type":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"frequency":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"q":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"gain":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"boost":null}}}}',
-                '{"audio":{"out' + str(x) + '":{"eq3":{"desc":null}}}}',
-            ]
-
-    return commands
+    result = dict_to_strings(get_all_available_commands(device))
+    result.sort()
+    return result
 
 
 def backup_device(device, db):
