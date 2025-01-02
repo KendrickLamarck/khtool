@@ -114,7 +114,7 @@ def _get_command_subtree(device, path):
     return result
 
 
-def get_all_available_commands(device):
+def command_dict(device):
     return _get_command_subtree(device, [])
 
 
@@ -186,7 +186,7 @@ def populate_dict(device, dict_):
 
 def query_commands(device):
     """List of all command strings that should be used to query/backup a device."""
-    result = dict_to_strings(get_all_available_commands(device))
+    result = dict_to_strings(command_dict(device))
     result.sort()
     return result
 
@@ -200,7 +200,7 @@ def backup_device(device, db):
 
     product = get_product(device)
 
-    commands = get_all_available_commands(device)
+    commands = command_dict(device)
     populate_dict(device, commands)
 
     db[device.ip] = {"commands": {}}
