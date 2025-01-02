@@ -32,16 +32,6 @@ def send_print(device, str):
     print(send_command(device, str))
 
 
-def send_add_array(device, str, y):
-    x = get_interface(device)
-    ssc_transaction = device.send_ssc(str, interface=x)
-
-    if hasattr(ssc_transaction, "RX"):
-        y.append(ssc_transaction.RX.replace("\r\n", ""))
-
-    return y
-
-
 def get_interface(device):
     pattern = "^fe80::"
     result = re.match(pattern, str(device.ip))
@@ -118,8 +108,10 @@ def command_dict(device):
     return _get_command_subtree(device, [])
 
 
-def dict_to_strings(dict_):
-    """Convert a dictionary to a list of command strings.
+def _query_by_dict(device, dict_):
+    """Populate a command dictionary with values.
+
+    Also returns list of flattened command strings.
 
     For example:
 
@@ -145,49 +137,20 @@ def dict_to_strings(dict_):
             if subtree[k] != None:
                 path.append(k)
                 break
-            result.append(_path_to_json(path[1:] + [k]))
-        # This triggers if neither continue nor break were encountered.
-        else:
-            path.pop()
-
-    return result
-
-
-def populate_dict(device, dict_):
-    """Populate a command dictionary with values. """
-    dict_ = {"root": dict_}
-    path = ["root"]
-    visited = []
-    while path:
-        subtree = dict_
-        for s in path:
-            subtree = subtree[s]
-        for k in subtree.keys():
-            pathstring = "".join(path) + k
-            if pathstring in visited:
-                continue
-            visited.append(pathstring)
-            if subtree[k] != None:
-                path.append(k)
-                break
             command = _path_to_json(path[1:] + [k])
             command_output = send_command(device, command)
-            result = json.loads(command_output)
+            out_val = json.loads(command_output)
             # This would be nicer but doesn't work because of osc/limits.
             # for s in path[1:] + [k]:
-            #     result = result[s]
-            while isinstance(result, dict):
-                result = result.popitem()[-1]
-            subtree[k] = result
+            #     out_val = out_val[s]
+            while isinstance(out_val, dict):
+                out_val = out_val.popitem()[-1]
+            subtree[k] = out_val
+            result.append(command_output)
         # This triggers if neither continue nor break were encountered.
         else:
             path.pop()
 
-
-def query_commands(device):
-    """List of all command strings that should be used to query/backup a device."""
-    result = dict_to_strings(command_dict(device))
-    result.sort()
     return result
 
 
@@ -215,8 +178,10 @@ def backup_device(device, db):
 
 def query_device(device):
     print("*** query device settings ***")
-    for c in query_commands(device):
-        send_print(device, c)
+    command_list = _query_by_dict(device, command_dict(device))
+    command_list.sort()
+    for c in command_list:
+        print(c)
 
 
 def print_header(device):
