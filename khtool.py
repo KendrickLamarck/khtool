@@ -132,17 +132,6 @@ def dict_to_strings(dict_):
     return result
 
 
-def test_helper(path=[]):
-    X = ssc.Ssc_device_setup()
-    X.from_json("khtool.json")
-    device = X.ssc_devices[0]
-    device.connect(interface=get_interface(device))
-    assert device.connected
-    result = get_all_available_commands(device)
-    for s in dict_to_strings(result):
-        print(s)
-
-
 def query_commands(device):
     result = dict_to_strings(get_all_available_commands(device))
     result.sort()
