@@ -123,6 +123,8 @@ def _query_by_dict(device, dict_):
     Note: It's possible in principle to send the whole command_dict converted to json as
     a request, but it produces "413 - request too long" errors on some devices.
     """
+    # This is some version of depth-first search. Might not be the most efficient
+    # implementation.
     result = []
     dict_ = {"root": dict_}
     path = ["root"]
@@ -136,11 +138,15 @@ def _query_by_dict(device, dict_):
             if pathstring in visited:
                 continue
             visited.append(pathstring)
+            # If there is another sub-dictionary, go deeper.
             if subtree[k] != None:
                 path.append(k)
                 break
+            # We encountered "None". Insert the value in the dictionary and append the
+            # command string for this value to the return result.
             command = _path_to_json(path[1:] + [k])
             command_output = send_command(device, command)
+            result.append(command_output)
             out_val = json.loads(command_output)
             # This would be nicer but doesn't work because of osc/limits.
             # for s in path[1:] + [k]:
@@ -148,8 +154,8 @@ def _query_by_dict(device, dict_):
             while isinstance(out_val, dict):
                 out_val = out_val.popitem()[-1]
             subtree[k] = out_val
-            result.append(command_output)
-        # This triggers if neither continue nor break were encountered.
+        # This triggers if the loop ran through without break being encountered, i.e. if
+        # all values in the current subdict were either already visited or "None".
         else:
             path.pop()
 
