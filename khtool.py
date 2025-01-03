@@ -105,10 +105,21 @@ def _get_command_subtree(device, path):
 
 
 def command_dict(device):
-    result = _get_command_subtree(device, [])
-    result["osc"].pop("schema", None)
-    result["osc"].pop("limits", None)
-    return result
+    if os.path.exists("commands.json"):
+        with open("commands.json", "r", encoding="ascii") as infile:
+            file_dict = json.load(infile)
+            if device.name in file_dict:
+                return file_dict[device.name]
+    else:
+        file_dict = {}
+
+    commands_for_device = _get_command_subtree(device, [])
+    commands_for_device["osc"].pop("schema", None)
+    commands_for_device["osc"].pop("limits", None)
+    file_dict[device.name] = commands_for_device
+    with open("commands.json", "w", encoding="ascii") as outfile:
+        json.dump(file_dict, outfile, indent=4, sort_keys=True)
+    return commands_for_device
 
 
 def _query_by_dict(device, dict_):
