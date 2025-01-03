@@ -164,7 +164,7 @@ def backup_device(device, db):
     product = get_product(device)
 
     commands = command_dict(device)
-    populate_dict(device, commands)
+    _query_by_dict(device, commands)
 
     db[device.ip] = {"commands": {}}
     db[device.ip]["commands"] = commands
