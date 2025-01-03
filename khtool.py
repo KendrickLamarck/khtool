@@ -111,7 +111,7 @@ def command_dict(device):
 def _query_by_dict(device, dict_):
     """Populate a command dictionary with values.
 
-    Also returns list of flattened command strings.
+    Also returns list of flattened JSON command strings.
 
     For example:
 
@@ -120,6 +120,8 @@ def _query_by_dict(device, dict_):
         '{"a":{"c":null}}'
     ]
 
+    Note: It's possible in principle to send the whole command_dict converted to json as
+    a request, but it produces "413 - request too long" errors on some devices.
     """
     result = []
     dict_ = {"root": dict_}
