@@ -105,7 +105,10 @@ def _get_command_subtree(device, path):
 
 
 def command_dict(device):
-    return _get_command_subtree(device, [])
+    result = _get_command_subtree(device, [])
+    result["osc"].pop("schema", None)
+    result["osc"].pop("limits", None)
+    return result
 
 
 def _query_by_dict(device, dict_):
