@@ -82,7 +82,7 @@ def _get_available_subcommands(device, path):
     json_path = _path_to_json(path)
     if path:
         json_path = "[" + json_path + "]"
-    request = '{"osc":{"schema":' + json_path + '}}'
+    request = '{"osc":{"schema":' + json_path + "}}"
     response = send_command(device, request)
     result = json.loads(response)["osc"]["schema"][0]
     # Strip the "prefix" of the returned dictionary.
@@ -157,7 +157,6 @@ def _query_by_dict(device, dict_):
 
 
 def backup_device(device, db):
-
     if hasattr(device, "connected"):
         if not device.connected:
             print("device " + str(device.ip) + " is not online")
