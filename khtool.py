@@ -97,7 +97,7 @@ def _get_command_subtree(device, path):
     This function can be applied to the root path [] to get all available commands.
     """
     result = _get_available_subcommands(device, path)
-    if result == None:
+    if result is None:
         return None
     for k in result.keys():
         result[k] = _get_command_subtree(device, path + [k])
@@ -142,7 +142,7 @@ def _query_by_dict(device, dict_):
                 continue
             visited.append(pathstring)
             # If there is another sub-dictionary, go deeper.
-            if subtree[k] != None:
+            if subtree[k] is not None:
                 path.append(k)
                 break
             # We encountered "None". Insert the value in the dictionary and append the
